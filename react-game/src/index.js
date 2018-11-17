@@ -49,11 +49,13 @@ class Game extends React.Component {
     this.state = {
       history: [
         {
-          squares: Array(9).fill(null)
+          squares: Array(9).fill(null),
+          position: {row: null, column: null} //在历史记录中显示落子行列位置
         }
       ],
       stepNumber: 0,
-      xIsNext: true
+      xIsNext: true,
+      size: 3 // 棋盘大小
     };
   }
 
@@ -61,14 +63,19 @@ class Game extends React.Component {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
+    const position = {...current.position};
     if (calculateWinner(squares) || squares[i]) {
       return;
     }
     squares[i] = this.state.xIsNext ? "X" : "O";
+    position.row = Math.ceil((i + 1) / this.state.size);
+    position.column = i % this.state.size + 1; 
+
     this.setState({
       history: history.concat([
         {
-          squares: squares
+          squares: squares,
+          position: position
         }
       ]),
       stepNumber: history.length,
@@ -89,8 +96,10 @@ class Game extends React.Component {
     const winner = calculateWinner(current.squares);
 
     const moves = history.map((step, move) => {
+      const position = step.position;
       const desc = move ?
-        'Go to move #' + move :
+        // 'Go to move #' + move + 'position: ' + position.row + position.column:
+        `Go to move #${move}. row: ${position.row}, column: ${position.column}`:
         'Go to game start';
       return (
         <li key={move}>
