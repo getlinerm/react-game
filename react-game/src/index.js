@@ -16,29 +16,32 @@ class Board extends React.Component {
       <Square
         value={this.props.squares[i]}
         onClick={() => this.props.onClick(i)}
+        key={i}
       />
     );
   }
 
-  render() {
+  renderRow(row){
+    let coloums = [];
+    for(let i = 0; i < this.props.size; i++){
+      coloums.push(this.renderSquare(row * this.props.size + i));
+    }
     return (
-      <div>
-        <div className="board-row">
-          {this.renderSquare(0)}
-          {this.renderSquare(1)}
-          {this.renderSquare(2)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(3)}
-          {this.renderSquare(4)}
-          {this.renderSquare(5)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(6)}
-          {this.renderSquare(7)}
-          {this.renderSquare(8)}
-        </div>
+      <div 
+        className="board-row" 
+        key={row}>
+        {coloums}
       </div>
+    );
+  }
+
+  render() {
+    let rows = [];
+    for(let i = 0; i < this.props.size; i++){
+      rows.push(this.renderRow(i));
+    }
+    return (
+      <div>{rows}</div>
     );
   }
 }
@@ -49,13 +52,13 @@ class Game extends React.Component {
     this.state = {
       history: [
         {
-          squares: Array(9).fill(null),
+          squares: Array(Math.pow(this.props.size, 2)).fill(null),
           position: {row: null, column: null} //在历史记录中显示落子行列位置
         }
       ],
       stepNumber: 0,
       xIsNext: true,
-      size: 3 // 棋盘大小
+      // size: 3 // 棋盘大小
     };
   }
 
@@ -68,8 +71,8 @@ class Game extends React.Component {
       return;
     }
     squares[i] = this.state.xIsNext ? "X" : "O";
-    position.row = Math.ceil((i + 1) / this.state.size);
-    position.column = i % this.state.size + 1; 
+    position.row = Math.ceil((i + 1) / this.props.size);
+    position.column = i % this.props.size + 1; 
 
     this.setState({
       history: history.concat([
@@ -123,6 +126,7 @@ class Game extends React.Component {
           <Board
             squares={current.squares}
             onClick={i => this.handleClick(i)}
+            size={this.props.size}
           />
         </div>
         <div className="game-info">
@@ -136,7 +140,7 @@ class Game extends React.Component {
 
 // ========================================
 
-ReactDOM.render(<Game />, document.getElementById("root"));
+ReactDOM.render(<Game size={3}/>, document.getElementById("root"));
 
 function calculateWinner(squares) {
   const lines = [
