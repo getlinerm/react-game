@@ -139,6 +139,10 @@ class Game extends React.Component {
           this.setState({
             sword: calculateWinner(squares).sword
           });
+          return;
+        }
+        if(Math.pow(this.props.size, 2) === this.state.stepNumber){
+          alert("draw!");
         }
       } 
     );
