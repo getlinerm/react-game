@@ -46,6 +46,36 @@ class Board extends React.Component {
   }
 }
 
+class Moves extends React.Component {
+  render(){
+    const moves = this.props.history.map((step, move) => {
+      const position = step.position;
+      const desc = move ?
+        `Go to move #${move}. row: ${position.row}, column: ${position.column}`:
+        `Go to game start. row: , column: `;
+      return (
+        <li key={move}>
+          <button 
+            className={this.props.stepNumber === move ? 'active' : ''}
+            onClick={() => {this.props.onClick(move)}}>{desc}
+          </button>
+        </li>
+      );
+    });
+    if(!this.props.orderASC){
+      moves.reverse();
+    }
+    return (
+      <div>
+        <button onClick={() => {this.props.onToggle()}}>
+          {this.props.orderASC ? 'asc' : 'desc'}
+        </button>
+        <ol>{moves}</ol>
+      </div>
+    );
+  }
+}
+
 class Game extends React.Component {
   constructor(props) {
     super(props);
@@ -58,7 +88,7 @@ class Game extends React.Component {
       ],
       stepNumber: 0,
       xIsNext: true,
-      // size: 3 // 棋盘大小
+      orderASC: true
     };
   }
 
@@ -93,25 +123,16 @@ class Game extends React.Component {
     });
   }
 
+  toggleOrder(){
+    this.setState({
+      orderASC: !this.state.orderASC
+    })
+  }
+
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares);
-
-    const moves = history.map((step, move) => {
-      const position = step.position;
-      const desc = move ?
-        `Go to move #${move}. row: ${position.row}, column: ${position.column}`:
-        `Go to game start. row: , column: `;
-      return (
-        <li key={move}>
-          <button 
-            className={this.state.stepNumber === move ? 'active' : ''}
-            onClick={() => this.jumpTo(move)}>{desc}
-          </button>
-        </li>
-      );
-    });
 
     let status;
     if (winner) {
@@ -131,7 +152,13 @@ class Game extends React.Component {
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>{moves}</ol>
+          <Moves
+            history={this.state.history}
+            orderASC={this.state.orderASC}
+            stepNumber={this.state.stepNumber}
+            onToggle={()=>{this.toggleOrder();}}
+            onClick={(i)=> {this.jumpTo(i);}}
+          />
         </div>
       </div>
     );
@@ -140,7 +167,7 @@ class Game extends React.Component {
 
 // ========================================
 
-ReactDOM.render(<Game size={3}/>, document.getElementById("root"));
+ReactDOM.render(<Game size={5}/>, document.getElementById("root"));
 
 function calculateWinner(squares) {
   const lines = [
@@ -161,4 +188,3 @@ function calculateWinner(squares) {
   }
   return null;
 }
-
