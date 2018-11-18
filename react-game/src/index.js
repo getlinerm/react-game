@@ -1,30 +1,38 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
+import './index.css'; 
 
-function Square(props) {
-  return (
-    <button className="square" onClick={props.onClick}>
-      {props.value}
-    </button>
-  );
+class Square extends React.Component {
+  render(){
+    return (
+      <button 
+        className={this.props.target ? 'square target' : 'square'} 
+        onClick={this.props.onClick}>
+        {this.props.value }
+      </button>
+    );
+  }
 }
 
 class Board extends React.Component {
-  renderSquare(i) {
+  renderSquare(i, target) {
     return (
       <Square
         value={this.props.squares[i]}
+        target={target}
         onClick={() => this.props.onClick(i)}
         key={i}
       />
     );
   }
 
-  renderRow(row){
+  renderRow(row, sword){
     let coloums = [];
     for(let i = 0; i < this.props.size; i++){
-      coloums.push(this.renderSquare(row * this.props.size + i));
+      let num = row * this.props.size + i;
+      let target = sword.includes(num);
+      
+      coloums.push(this.renderSquare(num, target));
     }
     return (
       <div 
@@ -38,7 +46,7 @@ class Board extends React.Component {
   render() {
     let rows = [];
     for(let i = 0; i < this.props.size; i++){
-      rows.push(this.renderRow(i));
+      rows.push(this.renderRow(i, this.props.sword));
     }
     return (
       <div>{rows}</div>
@@ -88,7 +96,8 @@ class Game extends React.Component {
       ],
       stepNumber: 0,
       xIsNext: true,
-      orderASC: true
+      orderASC: true,
+      sword: [] // 赢得比赛的凭据
     };
   }
 
@@ -97,23 +106,42 @@ class Game extends React.Component {
     const current = history[history.length - 1];
     const squares = current.squares.slice();
     const position = {...current.position};
-    if (calculateWinner(squares) || squares[i]) {
+    if (squares[i]) {
+      return;
+    }
+    if (calculateWinner(squares).winner) {
+      this.setState({
+        sword: calculateWinner(squares).sword
+      });
       return;
     }
     squares[i] = this.state.xIsNext ? "X" : "O";
     position.row = Math.ceil((i + 1) / this.props.size);
     position.column = i % this.props.size + 1; 
 
-    this.setState({
-      history: history.concat([
-        {
-          squares: squares,
-          position: position
+    this.setState(
+      {
+        history: history.concat([
+          {
+            squares: squares,
+            position: position
+          }
+        ]),
+        stepNumber: history.length,
+        xIsNext: !this.state.xIsNext
+      },
+      () => {
+        const history = this.state.history.slice(0, this.state.stepNumber + 1);
+        const current = history[history.length - 1];
+        const squares = current.squares.slice();
+      
+        if (calculateWinner(squares).winner) {
+          this.setState({
+            sword: calculateWinner(squares).sword
+          });
         }
-      ]),
-      stepNumber: history.length,
-      xIsNext: !this.state.xIsNext
-    });
+      } 
+    );
   }
 
   jumpTo(step) {
@@ -132,7 +160,7 @@ class Game extends React.Component {
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares);
+    const winner = calculateWinner(current.squares).winner;
 
     let status;
     if (winner) {
@@ -148,6 +176,7 @@ class Game extends React.Component {
             squares={current.squares}
             onClick={i => this.handleClick(i)}
             size={this.props.size}
+            sword={this.state.sword}
           />
         </div>
         <div className="game-info">
@@ -167,7 +196,7 @@ class Game extends React.Component {
 
 // ========================================
 
-ReactDOM.render(<Game size={5}/>, document.getElementById("root"));
+ReactDOM.render(<Game size={3}/>, document.getElementById("root"));
 
 function calculateWinner(squares) {
   const lines = [
@@ -183,8 +212,14 @@ function calculateWinner(squares) {
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
     if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
+      return {
+        winner: squares[a],
+        sword: [a,b,c]
+      };
     }
   }
-  return null;
+  return {
+    winner: null,
+    sword: []
+  };
 }
